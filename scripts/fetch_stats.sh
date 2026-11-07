@@ -100,7 +100,7 @@ if [ -z "${STATS_JSON}" ] && [ -n "${APPID}" ] && [ -n "${SECRET}" ]; then
   TODAY="$(date +%Y-%m-%d)"
   BEGIN="$(python3 -c "import datetime;print((datetime.date.today()-datetime.timedelta(days=30)).isoformat())")"
   # getarticletotal: 单日全量群发阅读数据（日期为群发日）。拉近 30 天窗口逐日合并。
-  STATS_JSON="$(for D in $(python3 -c "import datetime;print(' '.join((datetime.date.today()-datetime.timedelta(days=i)).isoformat() for i in range(30)))"); \
+  STATS_JSON="$(for D in $(python3 -c 'import datetime;print(" ".join((datetime.date.today()-datetime.timedelta(days=i)).isoformat() for i in range(30)))'); do \
       fetch_json "https://api.weixin.qq.com/datacube/getarticletotal?access_token=${TOKEN}" "{\"begin_date\":\"${D}\",\"end_date\":\"${D}\"}"; echo; done \
     | python3 -c '
 import json,sys
@@ -184,3 +184,12 @@ open(ledger,"w",encoding="utf-8").write(txt if txt.endswith("\n") else txt+"\n")
 print(f"✅ 台账已回写 {len(hits)} 条发布数据（{header}）")
 PY
 rm -f "${CANDIDATES}" "${PUBLISHED}"
+
+# ── v1.2.0：发布数据回写 IMA「公众号运营数据」（工作流质量闭环的回流段）──
+# 与台账回写同源：强/弱模式周报供下一轮 Step 0.5 热点加权、Step 5 QA 质量对账消费。
+# IMA 凭证缺失时脚本内部优雅退出（exit 0），不阻断主流程。
+STATS2IMA="${SKILL_DIR}/scripts/stats_to_ima.py"
+if [ -f "${STATS2IMA}" ]; then
+  echo "── 发布数据回写 IMA（公众号运营数据）──"
+  python3 "${STATS2IMA}" "${ARTICLES}" --weeks 4 || echo "⚠️  IMA 回写跳过（不阻断）"
+fi

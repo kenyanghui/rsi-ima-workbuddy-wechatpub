@@ -33,7 +33,7 @@ else
 fi
 
 # 3. 关键脚本在位
-for s in setup_wizard.py diagnose.py md_to_html.py post_draft.py sync_to_ima_wb.py archive_article.sh compress_image.sh; do
+for s in setup_wizard.py diagnose.py md_to_html.py post_draft.py sync_to_ima_wb.py archive_article.sh compress_image.sh fetch_stats.sh stats_to_ima.py; do
   [ -f "${SKILL_DIR}/scripts/${s}" ] || { say "❌ 缺脚本 scripts/${s}"; FAIL=1; }
 done
 [ "${FAIL}" = 0 ] && say "✅ 9 个脚本在位"

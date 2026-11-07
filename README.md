@@ -2,7 +2,7 @@
 
 > **把自己的 IMA 知识库变成公众号内容工厂** —— WorkBuddy 技能，每天自动产 3 篇原创长文进草稿箱，你只管审和发。
 
-[![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-blue)](https://www.workbuddy.cn) [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)]() [![Version](https://img.shields.io/badge/version-1.0.0-green)]()
+[![WorkBuddy Skill](https://img.shields.io/badge/WorkBuddy-Skill-blue)](https://www.workbuddy.cn) [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)]() [![Version](https://img.shields.io/badge/version-1.2.0-green)]()
 
 ## 这是什么
 

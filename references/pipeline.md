@@ -1,4 +1,9 @@
-# 九步流水线详细编排（rsi-wechat-publisher v1.0.0，主控必读）
+# 九步流水线详细编排（rsi-wechat-publisher v1.2.0，主控必读）
+
+> **闭环说明**：九步不是单向线——Step 6 成稿回存 IMA 之外，群发后的阅读/点赞数据经
+> `fetch_stats.sh`（采集）+ `stats_to_ima.py`（回写 IMA「公众号运营数据」目录）流回知识库，
+> 供下一轮 Step 0 预热加权、Step 0.5 热点选题、Step 3 QA 质量对账消费。
+> 「发布 → 数据回流 → 影响下一轮选题与质量基线」——九步跑完，圈闭上。
 
 > 主控（WorkBuddy 会话）的动作手册。所有个人参数从 `config.json` 读取，禁止硬编码。
 
@@ -25,7 +30,8 @@
  ├── Step 4  spawn format ×N → 封面/插图 + article.html + CTA + post_draft.py 推草稿箱 → 04_publish_queue.md + format/manifest.json
  ├── Step 5  archive：bash scripts/archive_article.sh <日期> <产物目录>
  ├── Step 6  sync-ima：python3 scripts/sync_to_ima_wb.py <articles目录> <日期>
- └── Step 7  复盘：回写台账 + check_drift + _status.json finished:true + 日报简报
+ └── Step 7  复盘：回写台账 + 质量对账（QA 分 × 运营数据）+ check_drift + _status.json finished:true + 日报简报
+      ↻ 回流段：群发次日 bash scripts/fetch_stats.sh（采集阅读/点赞 → meta.json + 台账 + stats_to_ima.py 回写 IMA「公众号运营数据」）→ 下一轮 Step 0/0.5/3 消费 → 圈闭上
 ```
 
 子代理提示词模板：`references/agent-prompts.md`（填充后 spawn，subagent_type=general-purpose）。
@@ -37,11 +43,12 @@
 3. `mkdir -p pipeline/<日期>/p{1..N}`。
 4. 读 config.json：拿到 kb_id、author、persona、articles_per_day。
 5. 读 `_rsi_ledger.md` 提炼：素材避重（7 天内/累计≥2 次）、风格偏好结论、金句库、硬约束修正。
-6. IMA/公众号凭证探测：`python3 scripts/diagnose.py --check` 可选；缺 IMA → Step 0.7/6 跳过；缺公众号 → format 降级本地包（简报标注）。
+6. 读 IMA「公众号运营数据」目录最新周报（`stats_to_ima.py` 产物）：提炼强/弱标题模式——强模式（阅读 ≥2× 均值）优先同类角度，弱模式（<0.5× 均值）规避；作为本轮 topic/Step 0.5 的加权输入。无数据（<3 篇）跳过防过拟合。
+7. IMA/公众号凭证探测：`python3 scripts/diagnose.py --check` 可选；缺 IMA → Step 0.7/6 跳过；缺公众号 → format 降级本地包（简报标注）。
 
 ## Step 0.5 热点采集（WebSearch）
 
-跑 config.hotspot_queries 的 2-3 条查询 → 挑 5-10 条形成候选池（标题+一句摘要）。热点仅作钩子，主体观点必须来自知识库。失败不阻断（纯库存选题）。
+跑 config.hotspot_queries 的 2-3 条查询 → 挑 5-10 条形成候选池（标题+一句摘要）。**候选池排序先过运营数据加权**：与 IMA「公众号运营数据」最新周报的强模式标题同类的热点排前，弱模式同类降权或剔除；无数据按原始序。热点仅作钩子，主体观点必须来自知识库。失败不阻断（纯库存选题）。
 
 ## Step 0.7 素材运营（IMA 凭证在时）
 
@@ -50,6 +57,7 @@
 ## Step 1-3（子代理执行，提示词见 agent-prompts.md）
 
 - qa 规则：`references/qa-rubric.json`（七维加权 + 四条一票否决：compliance / content_hollow / source_dup / unsourced_claim）。
+- 质量对账（v1.2.0）：QA 分不是终点——Step 7 复盘时把本轮各篇 QA 分与 IMA「公众号运营数据」周报的篇均阅读/点赞率并排：QA 高分但阅读低 → 下轮 topic 降权该类选题；QA 低分但阅读高 → 提炼亮点回写风格偏好。质量基线随真实传播数据浮动，而非静态分数。
 - 打回流程：qa REVISE → 携修改建议补 spawn writer（改 02_drafts.json 原地覆盖）→ qa 复检（追加到 03_qa_scores.md）；同篇 ≤2 次，仍不过换选题（回到 topic，单篇处理）。
 
 ## Step 4 format（子代理执行）
@@ -79,9 +87,10 @@
 ## Step 7 复盘（不可跳过）
 
 1. 回写 `_rsi_ledger.md`：素材避重 +1 行/源；风格偏好（标题模式+质检分）；金句候选；RSI 回路快照（本轮强在哪/下轮重点）。
-2. `bash scripts/check_drift.sh` FAIL 当场修。
-3. 写 `_status.json`：`finished:true` + stages + media_id 列表。
-4. 向用户发日报（固定字段）：
+2. **质量对账（v1.2.0）**：本轮 QA 分 × IMA「公众号运营数据」周报并排（见 Step 1-3 质量对账条），结论回写风格偏好；已群发文章跑 `bash scripts/fetch_stats.sh --all`（内部自动触发 `stats_to_ima.py` 回写 IMA）。
+3. `bash scripts/check_drift.sh` FAIL 当场修。
+4. 写 `_status.json`：`finished:true` + stages + media_id 列表。
+5. 向用户发日报（固定字段）：
 
 ```
 【RSI 流水线日报 <日期>】

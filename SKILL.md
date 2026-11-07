@@ -6,7 +6,7 @@ aliases:
   - rsi内容管线
   - 公众号AI写作
 description: RSI 自进化微信公众号内容流水线（人人可用版）。九步全自动：热点采集(WebSearch) → 素材运营(IMA知识库) → topic 选题 → writer 写作 → qa 质检 → format 排版配图 → 推草稿箱 → 归档 → 同步回 IMA。从自己的 IMA 知识库挖素材，每天产出 3 篇角度互不重复的公众号长文，全部进草稿箱由人工选择群发（绝不自动群发）。每轮回写 RSI 进化台账（素材避重/风格偏好/金句库），越用越聪明。Use when user mentions "发公众号", "公众号文章", "内容流水线", "rsi-wechat", "每天三篇", "跑流水线", "文章归档", "采集入库", "整理知识库".
-version: 1.1.0
+version: 1.2.0
 platforms: [darwin, linux]
 prerequisites:
   commands: [git, python3]
@@ -163,6 +163,7 @@ rsi-wechat-publisher/
     ├── sync_to_ima_wb.py    # 成稿回存 IMA（含COS签名）
     ├── archive_article.sh   # git 归档
     ├── compress_image.sh    # sips/cwebp 图片压缩
-    ├── fetch_stats.sh       # 发布数据回流（可选）
+    ├── fetch_stats.sh       # 发布数据回流：采集阅读/点赞 → meta.json + 台账 + 触发 stats_to_ima
+    ├── stats_to_ima.py      # 运营数据周报回写 IMA「公众号运营数据」（v1.2.0，强弱模式信号）
     └── check_drift.sh       # 防漂移自检
 ```
